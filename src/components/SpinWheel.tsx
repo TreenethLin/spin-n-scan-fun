@@ -69,7 +69,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onPrizeWon }) => {
   
   return (
     <div className="flex flex-col items-center p-6 bg-white rounded-lg shadow-md relative animate-fade-in">
-      <h2 className="text-xl font-bold mb-4">Step 3: Spin the Wheel!</h2>
+      <h2 className="text-xl font-bold mb-4">Spin the Wheel!</h2>
       
       {/* Confetti layer */}
       {confetti.map((c) => (
@@ -81,12 +81,12 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onPrizeWon }) => {
             left: `${c.left}%`,
             '--fall-delay': `${c.delay}s`,
             '--fall-duration': `${3 + Math.random() * 2}s`,
-          }}
+          } as React.CSSProperties}
         />
       ))}
       
       {/* The wheel */}
-      <div className="relative w-72 h-72 mb-6">
+      <div className="relative w-72 h-72 mb-6 md:w-96 md:h-96 xl:w-120 xl:h-120">
         {/* Center pointer */}
         <div className="absolute top-0 left-1/2 -ml-3 w-6 h-6 bg-white shadow-md z-10 transform rotate-45"></div>
         
@@ -101,14 +101,14 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onPrizeWon }) => {
               className={`wheel-segment ${prize.color}`}
               style={{ transform: `rotate(${(360 / PRIZES.length) * i}deg)` }}
             >
-              <div className="absolute top-10 left-1/2 -ml-12 w-24 text-center text-white font-bold text-xs rotate-90">
+              <div className="absolute top-10 left-1/2 -ml-12 w-24 text-center text-white font-bold text-xs md:text-sm xl:text-base rotate-90">
                 {prize.name}
               </div>
             </div>
           ))}
           <div className="absolute inset-0 rounded-full flex items-center justify-center">
-            <div className="w-16 h-16 rounded-full bg-white shadow-inner flex items-center justify-center">
-              <Gift className="h-8 w-8 text-expo-purple" />
+            <div className="w-16 h-16 rounded-full bg-white shadow-inner flex items-center justify-center md:w-24 md:h-24 xl:w-32 xl:h-32">
+              <Gift className="h-8 w-8 text-expo-purple md:h-12 md:w-12 xl:h-16 xl:w-16" />
             </div>
           </div>
         </div>
@@ -117,9 +117,10 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onPrizeWon }) => {
       <Button 
         onClick={handleSpin} 
         disabled={isSpinning || !canSpin}
-        className="bg-expo-orange hover:bg-expo-orange/90 flex items-center gap-2"
+        className="bg-expo-orange hover:bg-expo-orange/90 flex items-center gap-2 text-lg md:text-xl xl:text-2xl p-6 md:p-8"
+        size="lg"
       >
-        <RotateCw className={isSpinning ? "animate-spin" : ""} />
+        <RotateCw className={`${isSpinning ? "animate-spin" : ""} h-6 w-6 md:h-8 md:w-8`} />
         {isSpinning ? "Spinning..." : canSpin ? "Spin Now!" : "Already Spun"}
       </Button>
     </div>
