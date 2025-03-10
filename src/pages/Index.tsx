@@ -6,7 +6,7 @@ import QrScanner from '@/components/QrScanner';
 import SpinWheel from '@/components/SpinWheel';
 import RewardClaim from '@/components/RewardClaim';
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, PawPrint } from 'lucide-react';
 
 const STEPS = [
   "Verify Account",
@@ -39,26 +39,27 @@ const Index = () => {
   };
   
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background to-secondary">
-      <div className="w-full max-w-xl md:max-w-2xl lg:max-w-4xl xl:max-w-6xl flex flex-col items-center min-h-screen justify-center">
+    <div className="min-h-screen flex flex-col items-center p-4 bg-expo-background">
+      <div className="w-full max-w-6xl flex flex-col items-center min-h-screen justify-center">
         <ExpoHeader />
         
         <div className="w-full">
           <StepProgress currentStep={currentStep} steps={STEPS} />
           
           {!isEligible ? (
-            <div className="bg-white p-6 md:p-8 xl:p-10 rounded-lg shadow-md text-center animate-fade-in max-w-2xl mx-auto">
-              <h2 className="text-xl md:text-2xl xl:text-3xl font-bold mb-4 md:mb-6 text-destructive">Sorry!</h2>
-              <p className="mb-4 md:text-lg xl:text-xl">
+            <div className="bg-white p-8 md:p-10 xl:p-12 rounded-2xl shadow-md text-center animate-fade-in max-w-3xl mx-auto">
+              <PawPrint className="h-16 w-16 md:h-20 md:w-20 xl:h-24 xl:w-24 text-expo-orange mx-auto mb-6" />
+              <h2 className="text-2xl md:text-3xl xl:text-4xl font-bold mb-6 text-expo-purple">We're Sorry!</h2>
+              <p className="mb-6 text-lg md:text-xl xl:text-2xl text-gray-600">
                 You're not eligible to spin the wheel. This could be because:
               </p>
-              <ul className="text-left mb-6 list-disc pl-6 md:text-lg xl:text-xl">
-                <li>You've already used your spin</li>
-                <li>You need to create a LOOK LOOK account</li>
-                <li>Your QR code couldn't be verified</li>
+              <ul className="text-left mb-8 list-disc pl-8 md:text-lg xl:text-xl text-gray-600 max-w-xl mx-auto">
+                <li className="mb-3">You've already used your spin</li>
+                <li className="mb-3">You need to create a LOOK LOOK account</li>
+                <li className="mb-3">Your QR code couldn't be verified</li>
               </ul>
-              <Button onClick={handleReset} size="lg" className="flex items-center gap-2 text-lg md:text-xl">
-                <RefreshCw className="h-5 w-5 md:h-6 md:w-6" />
+              <Button onClick={handleReset} size="lg" className="bg-expo-orange hover:bg-expo-orange/90 text-white flex items-center gap-2 text-lg md:text-xl rounded-full px-8 py-6">
+                <RefreshCw className="h-6 w-6 md:h-7 md:w-7" />
                 Try Again
               </Button>
             </div>
@@ -77,7 +78,7 @@ const Index = () => {
               <Button 
                 variant="outline" 
                 onClick={handleReset}
-                className="flex items-center gap-2 text-lg md:text-xl p-6 md:p-8"
+                className="flex items-center gap-2 text-lg md:text-xl p-6 md:p-8 border-2 border-expo-purple text-expo-purple hover:bg-expo-purple/10 rounded-full"
                 size="lg"
               >
                 <RefreshCw className="h-5 w-5 md:h-6 md:w-6" />
@@ -87,7 +88,7 @@ const Index = () => {
           )}
         </div>
         
-        <footer className="mt-auto pt-8 pb-4 w-full text-center text-base md:text-lg xl:text-xl text-muted-foreground">
+        <footer className="mt-auto pt-8 pb-4 w-full text-center text-base md:text-lg xl:text-xl text-gray-500">
           <p>Pet Expo 2025 - LOOK LOOK Spin & Win</p>
           <p>One spin per visitor. Prizes subject to availability.</p>
         </footer>
