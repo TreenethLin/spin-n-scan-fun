@@ -29,7 +29,7 @@ const StepProgress: React.FC<StepProgressProps> = ({ currentStep, steps }) => {
                   index + 1
                 )}
               </div>
-              <span className="text-xs mt-1 font-medium text-center">
+              <span className="text-xs md:text-sm mt-1 font-medium text-center">
                 {step}
               </span>
             </div>
