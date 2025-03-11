@@ -1,8 +1,19 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Gift, RotateCw } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+
+const PRIZES = [
+  { name: "Pet Toy", color: "bg-expo-purple" },
+  { name: "10% Off", color: "bg-expo-blue" },
+  { name: "Pet Treat", color: "bg-expo-orange" },
+  { name: "Free Sample", color: "bg-expo-pink" },
+  { name: "50% Off", color: "bg-expo-green" },
+  { name: "Pet Accessory", color: "bg-expo-purple" },
+  { name: "20% Off", color: "bg-expo-blue" },
+  { name: "Mystery Gift", color: "bg-expo-orange" }
+];
 
 interface SpinWheelProps {
   onPrizeWon: (prize: string) => void;
@@ -11,82 +22,43 @@ interface SpinWheelProps {
 const SpinWheel: React.FC<SpinWheelProps> = ({ onPrizeWon }) => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [canSpin, setCanSpin] = useState(true);
-  const [prizes, setPrizes] = useState([]);
   const wheelRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-
-  useEffect(() => {
-    const fetchPrizes = async () => {
-      const { data } = await supabase
-        .from('prizes')
-        .select()
-        .eq('active', true)
-        .order('created_at', { ascending: true });
-      
-      if (data) {
-        setPrizes(data);
-      }
-    };
-
-    fetchPrizes();
-  }, []);
-
-  const handleSpin = async () => {
+  
+  const handleSpin = () => {
     if (isSpinning || !canSpin) return;
     
     setIsSpinning(true);
     
-    try {
-      // Get the QR code from localStorage that was set during QR scanning
-      const qrCode = localStorage.getItem('wheelSpinQrCode');
-      
-      if (!qrCode) {
-        throw new Error('QR code not found. Please scan your QR code again.');
-      }
-      
-      const { data, error } = await supabase.functions.invoke('spin-wheel', {
-        body: { 
-          qrCode,
-          ip: window.location.hostname
-        }
-      });
-
-      if (error) throw error;
-
-      const prizeIndex = prizes.findIndex(p => p.name === data.prize);
-      const rotation = 1800 + (360 / prizes.length) * prizeIndex;
-      
-      if (wheelRef.current) {
-        wheelRef.current.style.setProperty('--spin-rotation', `${rotation}deg`);
-      }
-      
-      setTimeout(() => {
-        setIsSpinning(false);
-        setCanSpin(false);
-        toast({
-          title: "Congratulations! 🎉",
-          description: `You won: ${data.prize}`,
-        });
-        onPrizeWon(data.prize);
-      }, 3500);
-    } catch (error) {
-      console.error('Error spinning wheel:', error);
-      setIsSpinning(false);
-      toast({
-        title: "Error",
-        description: error.message || "There was a problem spinning the wheel. Please try again.",
-        variant: "destructive",
-      });
+    // Calculate a random prize
+    const prizeIndex = Math.floor(Math.random() * PRIZES.length);
+    const rotation = 1800 + (360 / PRIZES.length) * prizeIndex;
+    
+    // Set CSS variable for rotation
+    if (wheelRef.current) {
+      wheelRef.current.style.setProperty('--spin-rotation', `${rotation}deg`);
     }
+    
+    // Wait for animation to complete
+    setTimeout(() => {
+      setIsSpinning(false);
+      setCanSpin(false);
+      toast({
+        title: "Congratulations! 🎉",
+        description: `You won: ${PRIZES[prizeIndex].name}`,
+      });
+      onPrizeWon(PRIZES[prizeIndex].name);
+    }, 3500);
   };
-
+  
+  // Create confetti effect when spinning stops
   const [confetti, setConfetti] = useState<Array<{ id: number; color: string; top: number; left: number; delay: number }>>([]);
-
+  
   useEffect(() => {
     if (!isSpinning && !canSpin) {
       const newConfetti = Array.from({ length: 50 }, (_, i) => ({
         id: i,
-        color: prizes[Math.floor(Math.random() * prizes.length)].color,
+        color: PRIZES[Math.floor(Math.random() * PRIZES.length)].color,
         top: Math.random() * 20 - 10,
         left: Math.random() * 100,
         delay: Math.random() * 2,
@@ -94,11 +66,12 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onPrizeWon }) => {
       setConfetti(newConfetti);
     }
   }, [isSpinning, canSpin]);
-
+  
   return (
     <div className="flex flex-col items-center p-6 bg-white rounded-lg shadow-md relative animate-fade-in">
       <h2 className="text-xl font-bold mb-4">Spin the Wheel!</h2>
       
+      {/* Confetti layer */}
       {confetti.map((c) => (
         <div
           key={c.id}
@@ -112,18 +85,21 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onPrizeWon }) => {
         />
       ))}
       
+      {/* The wheel */}
       <div className="relative w-72 h-72 mb-6 md:w-96 md:h-96 xl:w-120 xl:h-120">
+        {/* Center pointer */}
         <div className="absolute top-0 left-1/2 -ml-3 w-6 h-6 bg-white shadow-md z-10 transform rotate-45"></div>
         
+        {/* Wheel */}
         <div 
           ref={wheelRef} 
           className={`relative w-full h-full rounded-full overflow-hidden border-4 border-gray-200 ${isSpinning ? 'animate-spin-wheel' : ''}`}
         >
-          {prizes.map((prize, i) => (
+          {PRIZES.map((prize, i) => (
             <div 
               key={i}
               className={`wheel-segment ${prize.color}`}
-              style={{ transform: `rotate(${(360 / prizes.length) * i}deg)` }}
+              style={{ transform: `rotate(${(360 / PRIZES.length) * i}deg)` }}
             >
               <div className="absolute top-10 left-1/2 -ml-12 w-24 text-center text-white font-bold text-xs md:text-sm xl:text-base rotate-90">
                 {prize.name}

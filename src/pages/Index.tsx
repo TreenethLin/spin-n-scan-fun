@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw } from 'lucide-react';
 
 const STEPS = [
-  "Verify QR Code",
+  "Verify Account",
   "Spin the Wheel",
   "Claim Reward"
 ];
@@ -17,18 +17,13 @@ const STEPS = [
 const Index = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isEligible, setIsEligible] = useState(true);
-  const [isClaimed, setIsClaimed] = useState(false);
   const [prize, setPrize] = useState<string | null>(null);
   
-  const handleQrScanComplete = (isUserEligible: boolean, hasClaimedPrize: boolean) => {
-    setIsEligible(isUserEligible);
-    setIsClaimed(hasClaimedPrize);
-    
-    if (isUserEligible) {
+  const handleQrScanComplete = (isExistingUser: boolean) => {
+    if (isExistingUser) {
       setCurrentStep(1); // Move to Spin the Wheel step
-    } else if (hasClaimedPrize) {
-      // If they've already claimed a prize, take them straight to the claim screen
-      setCurrentStep(2);
+    } else {
+      setIsEligible(false);
     }
   };
   
@@ -40,9 +35,7 @@ const Index = () => {
   const handleReset = () => {
     setCurrentStep(0);
     setIsEligible(true);
-    setIsClaimed(false);
     setPrize(null);
-    localStorage.removeItem('wheelSpinQrCode');
   };
   
   return (
@@ -55,17 +48,18 @@ const Index = () => {
           
           {!isEligible ? (
             <div className="bg-white p-6 md:p-8 xl:p-10 rounded-lg shadow-md text-center animate-fade-in max-w-2xl mx-auto">
-              <h2 className="text-xl md:text-2xl xl:text-3xl font-bold mb-4 md:mb-6 text-destructive">Already Participated</h2>
+              <h2 className="text-xl md:text-2xl xl:text-3xl font-bold mb-4 md:mb-6 text-destructive">Sorry!</h2>
               <p className="mb-4 md:text-lg xl:text-xl">
-                You've already used your spin with this QR code.
+                You're not eligible to spin the wheel. This could be because:
               </p>
               <ul className="text-left mb-6 list-disc pl-6 md:text-lg xl:text-xl">
-                <li>Each QR code can only be used once</li>
-                <li>Please visit our booth if you need assistance</li>
+                <li>You've already used your spin</li>
+                <li>You need to create a LOOK LOOK account</li>
+                <li>Your QR code couldn't be verified</li>
               </ul>
               <Button onClick={handleReset} size="lg" className="flex items-center gap-2 text-lg md:text-xl">
                 <RefreshCw className="h-5 w-5 md:h-6 md:w-6" />
-                Try Another QR Code
+                Try Again
               </Button>
             </div>
           ) : (
@@ -74,8 +68,7 @@ const Index = () => {
               
               {currentStep === 1 && <SpinWheel onPrizeWon={handlePrizeWon} />}
               
-              {currentStep === 2 && (isClaimed || prize) && 
-                <RewardClaim prize={prize || "Your Prize"} />}
+              {currentStep === 2 && prize && <RewardClaim prize={prize} />}
             </div>
           )}
           
