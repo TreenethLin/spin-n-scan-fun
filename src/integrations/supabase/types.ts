@@ -9,7 +9,66 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      participants: {
+        Row: {
+          claimed: boolean | null
+          created_at: string
+          id: string
+          ip_address: string | null
+          prize: string | null
+          user_id: string
+        }
+        Insert: {
+          claimed?: boolean | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          prize?: string | null
+          user_id: string
+        }
+        Update: {
+          claimed?: boolean | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          prize?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      prizes: {
+        Row: {
+          active: boolean | null
+          color: string
+          created_at: string
+          id: string
+          initial_quantity: number
+          name: string
+          probability: number | null
+          remaining_quantity: number
+        }
+        Insert: {
+          active?: boolean | null
+          color: string
+          created_at?: string
+          id?: string
+          initial_quantity: number
+          name: string
+          probability?: number | null
+          remaining_quantity: number
+        }
+        Update: {
+          active?: boolean | null
+          color?: string
+          created_at?: string
+          id?: string
+          initial_quantity?: number
+          name?: string
+          probability?: number | null
+          remaining_quantity?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

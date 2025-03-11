@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Scan, QrCode, ChevronsUp } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface QrScannerProps {
   onScanComplete: (isExistingUser: boolean) => void;
@@ -12,32 +13,45 @@ const QrScanner: React.FC<QrScannerProps> = ({ onScanComplete }) => {
   const [isScanning, setIsScanning] = useState(false);
   const { toast } = useToast();
   
-  const handleUserQrScan = () => {
-    // Simulate user verification
+  const handleUserQrScan = async () => {
     setIsScanning(true);
     
-    setTimeout(() => {
-      setIsScanning(false);
+    try {
+      // Simulate QR code scan - in production, this would be real QR code data
+      const userId = `user_${Math.random().toString(36).substr(2, 9)}`;
       
-      // Randomly determine if user is existing and eligible
-      const isExistingUser = Math.random() > 0.3;
-      
-      if (isExistingUser) {
+      const { data, error } = await supabase.functions.invoke('verify-participant', {
+        body: { userId }
+      });
+
+      if (error) throw error;
+
+      if (data.isEligible) {
         toast({
-          title: "Welcome back!",
+          title: "Welcome!",
           description: "You're eligible to spin the wheel!",
           variant: "default",
         });
       } else {
         toast({
           title: "Sorry!",
-          description: "You've already participated or are not registered.",
+          description: "You've already participated.",
           variant: "destructive",
         });
       }
       
-      onScanComplete(isExistingUser);
-    }, 2000);
+      onScanComplete(data.isEligible);
+    } catch (error) {
+      console.error('Error verifying participant:', error);
+      toast({
+        title: "Error",
+        description: "There was a problem verifying your eligibility. Please try again.",
+        variant: "destructive",
+      });
+      onScanComplete(false);
+    } finally {
+      setIsScanning(false);
+    }
   };
   
   return (

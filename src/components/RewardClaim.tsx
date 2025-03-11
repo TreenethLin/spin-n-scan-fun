@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Trophy, Printer, CheckCircle } from 'lucide-react';
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface RewardClaimProps {
   prize: string;
@@ -9,9 +11,30 @@ interface RewardClaimProps {
 
 const RewardClaim: React.FC<RewardClaimProps> = ({ prize }) => {
   const [isClaimed, setIsClaimed] = useState(false);
+  const { toast } = useToast();
   
-  const handleClaim = () => {
-    setIsClaimed(true);
+  const handleClaim = async () => {
+    try {
+      const userId = localStorage.getItem('wheelSpinUserId');
+      const { error } = await supabase.functions.invoke('claim-prize', {
+        body: { userId }
+      });
+
+      if (error) throw error;
+
+      setIsClaimed(true);
+      toast({
+        title: "Success!",
+        description: "Your prize has been claimed successfully.",
+      });
+    } catch (error) {
+      console.error('Error claiming prize:', error);
+      toast({
+        title: "Error",
+        description: "There was a problem claiming your prize. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
   return (
