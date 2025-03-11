@@ -32,14 +32,18 @@ serve(async (req) => {
       .eq('qr_code', qrCode)
       .maybeSingle()
     
-    if (userError) throw userError
+    if (userError) {
+      console.error('Database error:', userError);
+      throw userError;
+    }
     
     if (!user) {
+      console.log('Invalid QR code:', qrCode);
       return new Response(
         JSON.stringify({ 
           isValid: false,
           isEligible: false,
-          message: 'Invalid QR code'
+          message: 'Invalid QR code. This code is not registered in our system.'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
@@ -52,10 +56,15 @@ serve(async (req) => {
       .eq('user_id', qrCode)
       .maybeSingle()
     
-    if (participantError) throw participantError
+    if (participantError) {
+      console.error('Error checking participation:', participantError);
+      throw participantError;
+    }
 
-    const isEligible = !participant
-    const isClaimed = participant?.claimed || false
+    const isEligible = !participant;
+    const isClaimed = participant?.claimed || false;
+
+    console.log(`QR ${qrCode} validation: Valid:true, Eligible:${isEligible}, Claimed:${isClaimed}`);
 
     return new Response(
       JSON.stringify({ 
@@ -67,9 +76,13 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        isValid: false,
+        isEligible: false 
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
