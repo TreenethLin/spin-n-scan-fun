@@ -20,6 +20,8 @@ serve(async (req) => {
       throw new Error('QR code is required')
     }
     
+    console.log('Received QR code:', qrCode)
+    
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''

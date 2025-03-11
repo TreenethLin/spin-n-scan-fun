@@ -21,11 +21,36 @@ const QrScanner: React.FC<QrScannerProps> = ({ onScanComplete }) => {
   // Clean up scanner on component unmount
   useEffect(() => {
     return () => {
-      if (scannerRef.current && scannerStarted) {
-        scannerRef.current.stop().catch(err => console.error('Error stopping scanner:', err));
-      }
+      stopScannerSafely();
     };
-  }, [scannerStarted]);
+  }, []);
+  
+  const stopScannerSafely = () => {
+    if (scannerRef.current && scannerStarted) {
+      try {
+        // Using a properly guarded stop process
+        scannerRef.current.stop()
+          .then(() => {
+            console.log('Scanner stopped successfully');
+            setScannerStarted(false);
+            setIsScanning(false);
+          })
+          .catch(err => {
+            console.error('Error stopping scanner:', err);
+            // Even if there's an error stopping, we should reset the state
+            setScannerStarted(false);
+            setIsScanning(false);
+          });
+      } catch (error) {
+        console.error('Exception when stopping scanner:', error);
+        setScannerStarted(false);
+        setIsScanning(false);
+      }
+    } else {
+      setScannerStarted(false);
+      setIsScanning(false);
+    }
+  };
   
   const handleSimulatedScan = async () => {
     if (!qrInput.trim()) {
@@ -41,11 +66,30 @@ const QrScanner: React.FC<QrScannerProps> = ({ onScanComplete }) => {
   };
   
   const startScanner = async () => {
+    // First ensure any existing scanner is properly stopped
+    stopScannerSafely();
+    
+    // Give a moment for cleanup before restarting
+    setTimeout(() => {
+      initializeScanner();
+    }, 100);
+  };
+  
+  const initializeScanner = async () => {
     if (!scanContainerRef.current) return;
     
     setIsScanning(true);
     
     try {
+      // Create a fresh scanner instance
+      const qrReaderElement = document.getElementById("qr-reader");
+      if (!qrReaderElement) {
+        throw new Error("QR reader element not found");
+      }
+      
+      // Clear existing content to prevent DOM errors
+      qrReaderElement.innerHTML = '';
+      
       scannerRef.current = new Html5Qrcode("qr-reader");
       
       const config = {
@@ -74,31 +118,19 @@ const QrScanner: React.FC<QrScannerProps> = ({ onScanComplete }) => {
   };
   
   const onScanSuccess = (decodedText: string) => {
+    console.log("QR code detected:", decodedText);
     // Stop the scanner once we have a successful scan
-    if (scannerRef.current && scannerStarted) {
-      scannerRef.current.stop().then(() => {
-        setScannerStarted(false);
-        verifyQrCode(decodedText);
-      }).catch(err => {
-        console.error('Error stopping scanner:', err);
-      });
-    }
+    stopScannerSafely();
+    verifyQrCode(decodedText);
   };
   
   const onScanFailure = (error: any) => {
     // Just log the error, don't show toast for each failure
-    console.error("QR scan error:", error);
+    console.debug("QR scan error:", error);
   };
   
   const stopScanner = () => {
-    if (scannerRef.current && scannerStarted) {
-      scannerRef.current.stop().then(() => {
-        setScannerStarted(false);
-        setIsScanning(false);
-      }).catch(err => {
-        console.error('Error stopping scanner:', err);
-      });
-    }
+    stopScannerSafely();
   };
   
   const verifyQrCode = async (qrCode: string) => {
@@ -106,11 +138,14 @@ const QrScanner: React.FC<QrScannerProps> = ({ onScanComplete }) => {
       // Store the QR code in localStorage
       localStorage.setItem('wheelSpinQrCode', qrCode);
       
+      console.log("Verifying QR code:", qrCode);
       const { data, error } = await supabase.functions.invoke('verify-participant', {
         body: { qrCode }
       });
 
       if (error) throw error;
+      
+      console.log("Verification response:", data);
       
       if (!data.isValid) {
         toast({
