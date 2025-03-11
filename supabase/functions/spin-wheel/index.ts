@@ -13,11 +13,11 @@ serve(async (req) => {
   }
 
   try {
-    const { userId, ip } = await req.json()
+    const { qrCode, ip } = await req.json()
     
-    // Validate the user ID
-    if (!userId) {
-      throw new Error('User ID is required')
+    // Validate the QR code
+    if (!qrCode) {
+      throw new Error('QR code is required')
     }
     
     const supabase = createClient(
@@ -25,24 +25,41 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Check if the QR code exists in users table
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('qr_code')
+      .eq('qr_code', qrCode)
+      .maybeSingle()
+    
+    if (userError) throw userError
+    
+    if (!user) {
+      throw new Error('Invalid QR code')
+    }
+
     // Check if user has already participated
-    const { data: existingParticipant } = await supabase
+    const { data: existingParticipant, error: participantError } = await supabase
       .from('participants')
       .select()
-      .eq('user_id', userId)
-      .single()
+      .eq('user_id', qrCode)
+      .maybeSingle()
       
+    if (participantError) throw participantError
+    
     if (existingParticipant) {
       throw new Error('You have already participated in the wheel spin')
     }
 
     // Get available prizes
-    const { data: prizes } = await supabase
+    const { data: prizes, error: prizesError } = await supabase
       .from('prizes')
       .select()
       .eq('active', true)
       .gt('remaining_quantity', 0)
 
+    if (prizesError) throw prizesError
+    
     if (!prizes || prizes.length === 0) {
       throw new Error('No prizes available')
     }
@@ -68,15 +85,16 @@ serve(async (req) => {
 
     if (updateError) throw updateError
 
-    const { error: participantError } = await supabase
+    const { error: participantInsertError } = await supabase
       .from('participants')
       .insert({
-        user_id: userId,
+        user_id: qrCode,
         prize: selectedPrize.name,
-        ip_address: ip
+        ip_address: ip,
+        claimed: false
       })
 
-    if (participantError) throw participantError
+    if (participantInsertError) throw participantInsertError
 
     return new Response(
       JSON.stringify({ prize: selectedPrize.name }),

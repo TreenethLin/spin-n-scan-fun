@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Gift, RotateCw } from 'lucide-react';
@@ -38,16 +37,16 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onPrizeWon }) => {
     setIsSpinning(true);
     
     try {
-      // Get the userId from localStorage that was set during QR scanning
-      const userId = localStorage.getItem('wheelSpinUserId');
+      // Get the QR code from localStorage that was set during QR scanning
+      const qrCode = localStorage.getItem('wheelSpinQrCode');
       
-      if (!userId) {
-        throw new Error('User ID not found. Please scan your QR code again.');
+      if (!qrCode) {
+        throw new Error('QR code not found. Please scan your QR code again.');
       }
       
       const { data, error } = await supabase.functions.invoke('spin-wheel', {
         body: { 
-          userId,
+          qrCode,
           ip: window.location.hostname
         }
       });

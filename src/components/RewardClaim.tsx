@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Trophy, Printer, CheckCircle } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
@@ -11,14 +11,50 @@ interface RewardClaimProps {
 
 const RewardClaim: React.FC<RewardClaimProps> = ({ prize }) => {
   const [isClaimed, setIsClaimed] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+
+  // Check if prize is already claimed when component mounts
+  useEffect(() => {
+    const checkClaimStatus = async () => {
+      try {
+        const qrCode = localStorage.getItem('wheelSpinQrCode');
+        if (!qrCode) return;
+
+        const { data, error } = await supabase
+          .from('participants')
+          .select('claimed')
+          .eq('user_id', qrCode)
+          .maybeSingle();
+
+        if (error) throw error;
+        
+        if (data) {
+          setIsClaimed(data.claimed || false);
+        }
+      } catch (error) {
+        console.error('Error checking claim status:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkClaimStatus();
+  }, []);
   
   const handleClaim = async () => {
+    setIsLoading(true);
     try {
-      const userId = localStorage.getItem('wheelSpinUserId');
-      const { error } = await supabase.functions.invoke('claim-prize', {
-        body: { userId }
-      });
+      const qrCode = localStorage.getItem('wheelSpinQrCode');
+      
+      if (!qrCode) {
+        throw new Error('QR code not found. Please scan your QR code again.');
+      }
+
+      const { error } = await supabase
+        .from('participants')
+        .update({ claimed: true })
+        .eq('user_id', qrCode);
 
       if (error) throw error;
 
@@ -34,6 +70,8 @@ const RewardClaim: React.FC<RewardClaimProps> = ({ prize }) => {
         description: "There was a problem claiming your prize. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -50,7 +88,12 @@ const RewardClaim: React.FC<RewardClaimProps> = ({ prize }) => {
         </div>
       </div>
       
-      {!isClaimed ? (
+      {isLoading ? (
+        <div className="flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-expo-green"></div>
+          <span className="ml-2">Loading...</span>
+        </div>
+      ) : !isClaimed ? (
         <Button 
           onClick={handleClaim} 
           className="bg-expo-green hover:bg-expo-green/90 flex items-center gap-2 text-lg md:text-xl xl:text-2xl p-6 md:p-8"
