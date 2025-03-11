@@ -20,6 +20,9 @@ const QrScanner: React.FC<QrScannerProps> = ({ onScanComplete }) => {
       // Simulate QR code scan - in production, this would be real QR code data
       const userId = `user_${Math.random().toString(36).substr(2, 9)}`;
       
+      // Store the userId in localStorage so it can be used by other components
+      localStorage.setItem('wheelSpinUserId', userId);
+      
       const { data, error } = await supabase.functions.invoke('verify-participant', {
         body: { userId }
       });

@@ -14,10 +14,27 @@ serve(async (req) => {
 
   try {
     const { userId, ip } = await req.json()
+    
+    // Validate the user ID
+    if (!userId) {
+      throw new Error('User ID is required')
+    }
+    
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
+
+    // Check if user has already participated
+    const { data: existingParticipant } = await supabase
+      .from('participants')
+      .select()
+      .eq('user_id', userId)
+      .single()
+      
+    if (existingParticipant) {
+      throw new Error('You have already participated in the wheel spin')
+    }
 
     // Get available prizes
     const { data: prizes } = await supabase
